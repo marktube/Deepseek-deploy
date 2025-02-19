@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>DeepSeek-R1-Distill-Qwen-14B 对话服务</title>
+    <style>
+        body { max-width: 800px; margin: 20px auto; padding: 20px; font-family: Arial, sans-serif; }
+        #input { width: 100%; height: 100px; margin: 10px 0; padding: 10px; }
+        #output { white-space: pre-wrap; background: #f5f5f5; padding: 10px; border-radius: 5px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+    </style>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.12.3/mark.min.js"></script>
+    <script>
+        marked.setOptions({
+            highlight: function (code, lang) {
+                return hljs.highlightAuto(code).value;
+            },
+            breaks: true
+        });
+    </script>
+</head>
+<body>
+    <h1>DeepSeek Qwen 14B 对话</h1>
+    <textarea id="input" placeholder="请输入您的问题..."></textarea>
+    <textarea id="api_key" placeholder="请输入您的FASTAPI Key"></textarea>
+    <button onclick="generateText()">提交</button>
+    <h3>模型回复：</h3>
+    <div id="output">等待输入...</div>
+
+    <script>
+        function generateText() {
+            const input = document.getElementById("input").value;
+            const outputDiv = document.getElementById("output");
+            outputDiv.innerHTML = "";
+
+            const prompt = encodeURIComponent(input);
+            const url = `/stream-generate?prompt=${prompt}&max_length=2048&temperature=0.7`;
+
+            const eventSource = new EventSource(url);
+
+            eventSource.onmessage = (event) => {
+                if (event.data === "[DONE]") {
+                    eventSource.close();
+                    const htmlContent = marked.parse(outputDiv.innerHTML);
+                    outputDiv.innerHTML = htmlContent;
+                    return;
+                }
+                outputDiv.innerHTML += event.data;
+            };
+
+            eventSource.onerror = (error) => {
+                outputDiv.innerHTML = `错误: ${error.message}`;
+                eventSource.close();
+            };
+        }
+    </script>
+</body>
+</html>
