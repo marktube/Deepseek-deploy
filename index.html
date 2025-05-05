@@ -404,6 +404,28 @@
             return contentDiv;
         }
 
+        function removeLoader(){
+            // 获取所有loader元素
+            const elements = document.getElementsByClassName('loader');
+            // 倒序循环避免实时集合问题
+            while(elements.length > 0) {
+                elements[0].parentNode.removeChild(elements[0]);
+            }
+        }
+
+        function restoreSendButton(){
+            const btn = document.getElementById('btn-send');
+            btn.disabled = false;
+            btn.style.backgroundColor = "#007bff";
+        }
+
+        function updateContent(contentDiv,msg){
+            contentDiv.innerHTML = renderMarkdownAndLatex(msg);
+            // 触发KaTeX渲染和代码高亮
+            renderMathInElement(contentDiv);
+            hljs.highlightAll();
+        }
+
         // 发送用户消息并模拟机器人回复
         async function sendMessage() {
             // 获取按钮元素
@@ -419,6 +441,7 @@
             const fastkey = document.getElementById('fastapi_key');
             if (fastkey.value === "") {
                 alert("请输入FASTAPI Key!");
+                restoreSendButton();
                 return;
             }
             const userInput = document.getElementById('user-input');
@@ -430,11 +453,7 @@
                 displayMessage(message, 'user');
 
                 let contentDiv = displayMessage('', 'bot', true);
-                // 模拟机器人回复
-                //setTimeout(() => {
-                //    const botResponse = "This is a bot response to: " + message;
-                //    displayMessage(botResponse, 'bot');
-                //}, 1000);
+
                 const botResponse = await fetch('/generate', {
                     method: 'POST',
                     headers: {
@@ -446,41 +465,25 @@
                     if (data.status == 200) {
                         data.json().then(data => {
                             const result = `> ${data.response}`.replace('</think>','\n\n');
-                            contentDiv.innerHTML = renderMarkdownAndLatex(result);
-                            // 触发KaTeX渲染和代码高亮
-                            renderMathInElement(contentDiv);
-                            hljs.highlightAll();
-                            // 获取所有loader元素
-                            const elements = document.getElementsByClassName('loader');
-                            // 倒序循环避免实时集合问题
-                            while(elements.length > 0) {
-                                elements[0].parentNode.removeChild(elements[0]);
-                            }
-                            btn.disabled = false;
-                            btn.style.backgroundColor = "#007bff";
+                            updateContent(contentDiv, result);
+                            removeLoader();
+                            restoreSendButton();
                         }).catch(error => alert(error));
                     } else {
-                        btn.disabled = false;
-                        btn.style.backgroundColor = "#007bff";
+                        restoreSendButton();
                         throw new Error("Error: " + data.status);
                     }
                 })
                 .catch(error => {
                     alert(error);
-                    contentDiv.innerHTML = renderMarkdownAndLatex('API key is invalid!');
-                    // 触发KaTeX渲染和代码高亮
-                    renderMathInElement(contentDiv);
-                    hljs.highlightAll();
-                    // 获取所有loader元素
-                    const elements = document.getElementsByClassName('loader');
-                    // 倒序循环避免实时集合问题
-                    while(elements.length > 0) {
-                        elements[0].parentNode.removeChild(elements[0]);
-                    }
-                    btn.disabled = false;
-                    btn.style.backgroundColor = "#007bff";
+                    updateContent(contentDiv,'API key is invalid!')
+                    removeLoader();
+                    restoreSendButton();
                 });
                 
+            }else{
+                alert('请输入提示词！');
+                restoreSendButton();
             }
         }
 
@@ -491,7 +494,7 @@
             }
         });
 
-        displayMessage('How can I help you?', 'bot-message');
+        displayMessage('请问有什么能帮到您？How can I help you?', 'bot-message');
 
     </script>
 
