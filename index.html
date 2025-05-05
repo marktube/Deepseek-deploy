@@ -424,6 +424,9 @@
             // 触发KaTeX渲染和代码高亮
             renderMathInElement(contentDiv);
             hljs.highlightAll();
+
+            const chatBox = document.getElementById('chat-box');
+            chatBox.scrollTop = chatBox.scrollHeight; // 滚动到底部
         }
 
         // 发送用户消息并模拟机器人回复
@@ -454,32 +457,33 @@
 
                 let contentDiv = displayMessage('', 'bot', true);
 
-                const botResponse = await fetch('/generate', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json', // 根据需求修改类型
-                        'X-API-Key': fastkey.value
-                    },
-                    body: JSON.stringify({'prompt': message, 'max_length': 1024})
-                }).then(data => {
-                    if (data.status == 200) {
-                        data.json().then(data => {
-                            const result = `> ${data.response}`.replace('</think>','\n\n');
-                            updateContent(contentDiv, result);
-                            removeLoader();
-                            restoreSendButton();
-                        }).catch(error => alert(error));
-                    } else {
+                const prompt = encodeURIComponent(message);
+                const url = `/stream-generate?prompt=${prompt}&max_length=2048&temperature=0.7&api_key=${fastkey.value}`;
+                
+                const eventSource = new EventSource(url);
+
+                let result = '>';
+                eventSource.onmessage = (event) => {
+                    if (event.data === "[DONE]") {
+                        eventSource.close();
+                        //alert(result);
+                        removeLoader();
                         restoreSendButton();
-                        throw new Error("Error: " + data.status);
+                        return;
                     }
-                })
-                .catch(error => {
+
+                    if(event.data !== "")
+                        result += event.data;
+                        updateContent(contentDiv, result);
+                };
+
+                eventSource.onerror = (error) => {
+                    eventSource.close();
                     alert(error);
-                    updateContent(contentDiv,'API key is invalid!')
+                    updateContent(contentDiv,error)
                     removeLoader();
                     restoreSendButton();
-                });
+                };
                 
             }else{
                 alert('请输入提示词！');

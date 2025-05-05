@@ -78,3 +78,43 @@ async def read_root():
     # 假设 index.html 文件位于当前目录
     file_path = os.path.join(os.path.dirname(__file__), "index.html")
     return FileResponse(file_path)
+
+
+@app.get("/stream-generate")
+async def stream_generate(
+    prompt: str = Query(..., description="输入提示语"),
+    max_length: int = Query(512, gt=0, le=2048),
+    temperature: float = Query(0.7, ge=0.0, le=2.0),
+    api_key: str = Query(..., description="API Key")
+):
+    if api_key not in auth_keys:
+        raise HTTPException(status_code=403, detail="Invalid API Key")
+    # 编码输入
+    inputs = tokenizer(prompt, return_tensors="pt",
+                            truncation=True, max_length=4096).to(model.device)
+    streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, decode_kwargs={"errors": "ignore"})
+    
+    def event_generator():
+        #yield tokenizer.decode(streamer, skip_special_tokens=True)
+        thread = Thread(target=model.generate, kwargs={**inputs, "streamer": streamer, "max_new_tokens": max_length, "temperature": temperature, "pad_token_id":tokenizer.eos_token_id})
+        thread.start()
+
+        is_thinking = True
+        for text in streamer:
+            if '<think>' in text:
+                is_thinking = True
+                continue
+            elif '</think>' in text:
+                is_thinking = False
+                yield {"data": '\n'}
+                continue
+            elif '<｜end▁of▁sentence｜>' in text:
+                break
+            
+            if is_thinking:
+                text = text.replace('\n', '\n> ')
+
+            yield {"data": text}
+        yield {"data": "[DONE]"}
+    
+    return EventSourceResponse(event_generator())
