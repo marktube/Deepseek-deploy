@@ -336,7 +336,7 @@
             renderMathInElement(document.body, {
                 delimiters: [
                     { left: '\\[', right: '\\]', display: true },  // 块级公式 \[...\]
-                    { left: '\\(', right: '\\)', display: false }  // 行内公式 \(...\)
+                    { left: '\\(', right: '\\)', display: true }  // 行内公式 \(...\)
                 ],
                 throwOnError: false, // 避免公式错误时抛出异常
                 strict: false
@@ -451,7 +451,19 @@
                         throw new Error("Error: " + data.status);
                     }
                 })
-                .catch(error => alert(error));
+                .catch(error => {
+                    alert(error);
+                    contentDiv.innerHTML = renderMarkdownAndLatex('API key is invalid!');
+                    // 触发KaTeX渲染和代码高亮
+                    renderMathInElement(contentDiv);
+                    hljs.highlightAll();
+                    // 获取所有loader元素
+                    const elements = document.getElementsByClassName('loader');
+                    // 倒序循环避免实时集合问题
+                    while(elements.length > 0) {
+                        elements[0].parentNode.removeChild(elements[0]);
+                    }
+                });
                 
             }
         }
