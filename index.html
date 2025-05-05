@@ -179,6 +179,24 @@
             align-self: flex-start;
         }
 
+        /* 加载动画 */
+        .loader {
+            width: 20px;
+            height: 20px;
+            margin: 10px 10px 10px 0px;
+            border: 3px solid rgba(255,255,255,0.2);
+            border-top-color: #00ff88;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        /* 旋转动画 */
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
         blockquote{
             color:#a6a6a6;
             border-left:2px solid #e5e5e5;
@@ -333,7 +351,7 @@
         }
 
         // 在聊天框中显示消息
-        function displayMessage(message, sender) {
+        function displayMessage(message, sender, isloading = false) {
             const chatBox = document.getElementById('chat-box');
             const messageDiv = document.createElement('div');
             messageDiv.classList.add('message', sender === 'user' ? 'user-message' : 'bot-message');
@@ -348,6 +366,12 @@
                 </svg>
                 `;
                 messageDiv.appendChild(avatarDiv);
+                // 添加加载动画
+                if (isloading) {
+                    const loaderDiv = document.createElement('div');
+                    loaderDiv.classList.add('loader');
+                    messageDiv.appendChild(loaderDiv);
+                }
             }
 
             // 添加消息内容容器
@@ -377,6 +401,7 @@
             renderMathInElement(contentDiv);
             hljs.highlightAll();
             chatBox.scrollTop = chatBox.scrollHeight; // 滚动到底部
+            return contentDiv;
         }
 
         // 发送用户消息并模拟机器人回复
@@ -394,6 +419,7 @@
                 // 显示用户消息
                 displayMessage(message, 'user');
 
+                let contentDiv = displayMessage('', 'bot', true);
                 // 模拟机器人回复
                 //setTimeout(() => {
                 //    const botResponse = "This is a bot response to: " + message;
@@ -410,7 +436,16 @@
                     if (data.status == 200) {
                         data.json().then(data => {
                             const result = `> ${data.response}`.replace('</think>','\n\n');
-                            displayMessage(result, 'bot');
+                            contentDiv.innerHTML = renderMarkdownAndLatex(result);
+                            // 触发KaTeX渲染和代码高亮
+                            renderMathInElement(contentDiv);
+                            hljs.highlightAll();
+                            // 获取所有loader元素
+                            const elements = document.getElementsByClassName('loader');
+                            // 倒序循环避免实时集合问题
+                            while(elements.length > 0) {
+                                elements[0].parentNode.removeChild(elements[0]);
+                            }
                         }).catch(error => alert(error));
                     } else {
                         throw new Error("Error: " + data.status);
@@ -428,7 +463,7 @@
             }
         });
 
-        displayMessage('How can I help you?', 'bot-message')
+        displayMessage('How can I help you?', 'bot-message');
 
     </script>
 
