@@ -109,6 +109,7 @@ async def stream_generate(
                 yield {"data": '\n'}
                 continue
             elif '<｜end▁of▁sentence｜>' in text:
+                yield {"data": text.replace('<｜end▁of▁sentence｜>', ' ')}
                 break
             
             if is_thinking:
