@@ -1,0 +1,6 @@
+transformers
+fastapi
+uvicorn
+streamlit
+sse_starlette
+torch

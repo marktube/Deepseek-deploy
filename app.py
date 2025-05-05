@@ -9,11 +9,15 @@ import os
 from threading import Thread
 from fastapi.security import APIKeyHeader
 from fastapi import Depends, HTTPException
+import asyncio
 
 api_key_header = APIKeyHeader(name="X-API-Key")
 
 auth_keys = ["fill your keys here",
              "support long string"]
+
+# 限流
+semaphore = asyncio.Semaphore(5)
 
 # 定义请求参数格式
 class Request(BaseModel):
@@ -47,25 +51,27 @@ app.add_middleware(
 
 @app.post("/generate")
 async def generate_text(request: Request, api_key: str = Depends(api_key_header)):
-    if api_key not in auth_keys:
-        raise HTTPException(status_code=403, detail="Invalid API Key")
-    
-    # 编码输入
-    inputs = tokenizer(request.prompt, return_tensors="pt").to(model.device)
-    
-    # 生成文本
-    with torch.no_grad():
-        outputs = model.generate(
-            **inputs,
-            max_new_tokens=request.max_length,
-            temperature=request.temperature,
-            top_p=request.top_p,
-            pad_token_id=tokenizer.eos_token_id
-        )
-    
-    # 解码结果
-    response = tokenizer.decode(outputs[0], skip_special_tokens=True)
-    return {"response": response}
+    async with semaphore:
+        if api_key not in auth_keys:
+            raise HTTPException(status_code=403, detail="Invalid API Key")
+        
+        # 编码输入
+        inputs = tokenizer(request.prompt, return_tensors="pt").to(model.device)
+        
+        # 生成文本
+        with torch.no_grad():
+            outputs = model.generate(
+                **inputs,
+                max_new_tokens=request.max_length,
+                temperature=request.temperature,
+                top_p=request.top_p,
+                pad_token_id=tokenizer.eos_token_id
+            )
+        
+        # 解码结果
+        response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+        return {"response": response}
+
 
 @app.get("/", response_class=FileResponse)
 async def read_root():
