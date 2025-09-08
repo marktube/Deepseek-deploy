@@ -13,7 +13,8 @@
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js" integrity="sha384-cMkvdD8LoxVzGF/RPUKAcvmm49FQ0oxwDF3BGKtDXcEc+T1b2N+teh/OJfpU0jr6" crossorigin="anonymous"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/contrib/auto-render.min.js" integrity="sha384-hCXGrW6PitJEwbkoStFjeJxv+fSOOQKOPbJxSfM6G5sWZjAyWhXiTIIAmQqnlLlh" crossorigin="anonymous"></script>
 
-    
+    <script defer src="https://events.vercount.one/js"></script>
+
     <!-- 代码高亮 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
@@ -278,7 +279,7 @@
             < </button>
                 <div class="menu-item">
                     <a href="http://www.iiif.tsinghua.edu.cn">
-                        <img width="80%" src="https://r2.liuyc.uk/iiif_logo.png" alt="清华大学产业创新与金融研究院">
+                        <img width="80%" src="https://flaredrive.liuyc.uk/raw/public/iiif_logo.png" alt="清华大学产业创新与金融研究院">
                     </a>
                 </div>
                 <div class="menu-item">
@@ -292,8 +293,12 @@
                     <input class="fkey" id="fastapi_key" type="password" maxlength="64" placeholder="请输入FASTAPI Key">
                 </div>
                 <div class="menu-item"><a class="olink"
-                        href="https://blog.liuyc.uk/2025/02/10/deepseek-local-deploy">Help</a>
+                        href="https://blog.liuyc.uk/2025/02/10/deepseek-local-deploy">Help</a><br><br>
+                    Total Page View:<br><br> <span class="menu-item" id="vercount_value_page_pv">Loading</span><br><br>
+                    Total Visits:<br><br> <span class="menu-item" id="vercount_value_site_pv">Loading</span><br><br>
+                    Site Total Visitors:<br><br> <span class="menu-item" id="vercount_value_site_uv">Loading</span>
                 </div>
+                
     </div>
 
     <!-- Button to toggle sidebar (for mobile use) -->
@@ -302,7 +307,7 @@
     <!-- Chat container -->
     <div class="chat-container" id="chat-container">
         <div class="chat-header">
-            Deepseek Distill Qwen 14B Chatbot
+            Deepseek Distill Qwen <br> 14B Chatbot
         </div>
         <div class="chat-box" id="chat-box">
             <!-- Messages will appear here -->
