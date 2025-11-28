@@ -319,6 +319,8 @@
     </div>
 
     <script>
+        // message list
+        var msglist=[];
         // Toggle sidebar open/close
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
@@ -380,6 +382,9 @@
                     loaderDiv.classList.add('loader');
                     messageDiv.appendChild(loaderDiv);
                 }
+                msglist.push({"role": "assistant", "content": message}); 
+            }else{
+                msglist.push({"role": "user", "content": message}); 
             }
 
             // 添加消息内容容器
@@ -464,9 +469,14 @@
                 displayMessage(message, 'user');
 
                 let contentDiv = displayMessage('', 'bot', true);
+                msglist.pop();
 
-                const prompt = encodeURIComponent(message);
-                const url = `/stream-generate?prompt=${prompt}&max_length=2048&temperature=0.7&api_key=${fastkey.value}`;
+                while (msglist.length > 3){
+                    msglist.shift();
+                }
+
+                const prompt = encodeURIComponent(JSON.stringify(msglist));
+                const url = `https://deepseek.liuyc.uk/stream-generate?prompt=${prompt}&max_length=2048&temperature=0.7&api_key=${fastkey.value}`;
                 
                 const eventSource = new EventSource(url);
 
@@ -475,6 +485,7 @@
                     if (event.data === "[DONE]") {
                         eventSource.close();
                         //alert(result);
+                        msglist.push({"role": "assistant", "content": result});
                         removeLoader();
                         restoreSendButton();
                         return;
@@ -494,8 +505,9 @@
 
                 eventSource.onerror = (error) => {
                     eventSource.close();
-                    alert(error);
-                    updateContent(contentDiv,error)
+                    alert("Error: error occurs while sending request!!!");
+                    msglist.pop();
+                    updateContent(contentDiv,error);
                     removeLoader();
                     restoreSendButton();
                 };
@@ -514,7 +526,7 @@
         });
 
         displayMessage('请问有什么能帮到您？How can I help you?', 'bot-message');
-
+        
     </script>
 
 </body>
