@@ -57,7 +57,7 @@ async def generate_text(request: Request, api_key: str = Depends(api_key_header)
         
         # 编码输入
         inputs = tokenizer(request.prompt, return_tensors="pt").to(model.device)
-        
+	input_length = inputs.input_ids.shape[1]        
         # 生成文本
         with torch.no_grad():
             outputs = model.generate(
@@ -69,7 +69,7 @@ async def generate_text(request: Request, api_key: str = Depends(api_key_header)
             )
         
         # 解码结果
-        response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+        response = tokenizer.decode(outputs[0][input_length:], skip_special_tokens=True)
         return {"response": response}
 
 
